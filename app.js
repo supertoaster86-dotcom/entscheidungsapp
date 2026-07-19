@@ -9,17 +9,14 @@ const APP_PASSWORD = "aendermich"; // <-- HIER ändern
    (siehe README.md, Abschnitt "Sync einrichten").
    Bleibt es null, läuft die App einfach nur lokal weiter.
    ============================================================ */
-const FIREBASE_CONFIG = null;
-/* Beispiel:
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSy...",
-  authDomain: "wir-entscheiden-xxxx.firebaseapp.com",
-  projectId: "wir-entscheiden-xxxx",
-  storageBucket: "wir-entscheiden-xxxx.appspot.com",
-  messagingSenderId: "...",
-  appId: "..."
-};
-*/
+  const firebaseConfig = {
+    apiKey: "AIzaSyCBAEZ9FVOD-98N44nNWzYIpxNeDnblI8A",
+    authDomain: "entscheidungsapp.firebaseapp.com",
+    projectId: "entscheidungsapp",
+    storageBucket: "entscheidungsapp.firebasestorage.app",
+    messagingSenderId: "1034348019158",
+    appId: "1:1034348019158:web:abcbbccf6b4953d4ee7877"
+  };
 
 let syncEnabled = false;
 let stateDocRef = null;
@@ -302,7 +299,8 @@ function showNextFilm() {
   const pos = filmIndex;
   const denom = Math.max(filmDeck.length - 1, 1);
   const cardColor = viridis(pos / denom);
-  document.getElementById('filmCardFront').style.background = cardColor;
+  const frontEl = document.getElementById('filmCardFront');
+  if (frontEl) frontEl.style.background = cardColor;
 
   document.getElementById('filmCardBack').textContent = filmDeck[filmIndex] || '–';
   filmIndex++;
