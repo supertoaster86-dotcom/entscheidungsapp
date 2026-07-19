@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#241F2B">
+<title>Wir Entscheiden</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<!-- Firebase (für Sync zwischen euch beiden Handys) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+  <!-- ============ SPERRBILDSCHIRM ============ -->
+  <div id="lockScreen" class="lock-screen">
+    <div class="lock-card">
+      <div class="lock-token">●</div>
+      <h1 class="lock-title">Wir Entscheiden</h1>
+      <p class="lock-sub">Nur für euch beide.</p>
+      <input type="password" id="pwInput" class="lock-input" placeholder="Passwort" autocomplete="off">
+      <button id="pwSubmit" class="btn btn-primary lock-btn">Rein damit</button>
+      <p id="pwError" class="lock-error">Falsches Passwort.</p>
+    </div>
+  </div>
+
+  <!-- ============ APP ============ -->
+  <div id="app" class="app hidden">
+
+    <header class="topbar">
+      <span class="topbar-dot"></span>
+      <h1 id="screenTitle" class="topbar-title">Glücksrad</h1>
+      <span id="syncStatus" class="sync-status"></span>
+    </header>
+
+    <main class="screens">
+
+      <!-- ---- WHEEL ---- -->
+      <section id="screen-wheel" class="screen active">
+        <div class="wheel-wrap">
+          <div class="wheel-pointer">▼</div>
+          <canvas id="wheelCanvas" width="600" height="600"></canvas>
+        </div>
+        <button id="spinBtn" class="btn btn-primary spin-btn">Drehen</button>
+        <div id="wheelResult" class="result-banner hidden"></div>
+
+        <div class="editor">
+          <div class="editor-head">
+            <span>Optionen</span>
+            <button id="wheelEditToggle" class="btn-icon" aria-label="Bearbeiten">✎</button>
+          </div>
+          <ul id="wheelList" class="chip-list"></ul>
+          <div id="wheelAddRow" class="add-row hidden">
+            <input id="wheelAddInput" type="text" placeholder="z. B. Döner, Pizza, Pho...">
+            <button id="wheelAddBtn" class="btn-icon btn-icon-add">+</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- CARDS ---- -->
+      <section id="screen-cards" class="screen">
+        <div class="card-stage">
+          <div id="filmCard" class="film-card">
+            <div class="film-card-inner">
+              <div class="film-card-face film-card-front">🎬</div>
+              <div id="filmCardBack" class="film-card-face film-card-back"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button id="cardNopeBtn" class="btn btn-ghost">Nächste</button>
+          <button id="cardFlipBtn" class="btn btn-primary">Aufdecken</button>
+        </div>
+
+        <div class="editor">
+          <div class="editor-head">
+            <span>Filmliste</span>
+            <button id="filmEditToggle" class="btn-icon" aria-label="Bearbeiten">✎</button>
+          </div>
+          <ul id="filmList" class="chip-list"></ul>
+          <div id="filmAddRow" class="add-row hidden">
+            <input id="filmAddInput" type="text" placeholder="Filmtitel...">
+            <button id="filmAddBtn" class="btn-icon btn-icon-add">+</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- COIN ---- -->
+      <section id="screen-coin" class="screen">
+        <div class="coin-stage">
+          <div id="coin" class="coin">
+            <div class="coin-face coin-heads"><span id="coinNameA">Name A</span></div>
+            <div class="coin-face coin-tails"><span id="coinNameB">Name B</span></div>
+          </div>
+        </div>
+        <button id="coinFlipBtn" class="btn btn-primary">Werfen</button>
+        <div id="coinResult" class="result-banner hidden"></div>
+
+        <div class="editor">
+          <div class="editor-head"><span>Namen</span></div>
+          <div class="name-edit-row">
+            <input id="coinInputA" type="text" placeholder="Name A" maxlength="16">
+            <input id="coinInputB" type="text" placeholder="Name B" maxlength="16">
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- KOCHPLAN ---- -->
+      <section id="screen-kochplan" class="screen">
+        <div class="koch-card">
+          <p class="koch-label">Heute kocht</p>
+          <p id="kochCurrent" class="koch-name">–</p>
+          <p id="kochLast" class="koch-meta"></p>
+        </div>
+        <button id="kochNextBtn" class="btn btn-primary">Erledigt, nächste·r ist dran</button>
+
+        <div class="editor">
+          <div class="editor-head"><span>Reihenfolge</span></div>
+          <ul id="kochList" class="chip-list koch-order-list"></ul>
+          <div class="add-row">
+            <input id="kochAddInput" type="text" placeholder="Person hinzufügen...">
+            <button id="kochAddBtn" class="btn-icon btn-icon-add">+</button>
+          </div>
+        </div>
+
+        <div class="editor">
+          <div class="editor-head"><span>Verlauf</span></div>
+          <ul id="kochHistory" class="history-list"></ul>
+        </div>
+      </section>
+
+    </main>
+
+    <nav class="tabbar">
+      <button class="tab active" data-screen="wheel">
+        <span class="tab-icon">🎡</span><span>Rad</span>
+      </button>
+      <button class="tab" data-screen="cards">
+        <span class="tab-icon">🃏</span><span>Filme</span>
+      </button>
+      <button class="tab" data-screen="coin">
+        <span class="tab-icon">🪙</span><span>Münze</span>
+      </button>
+      <button class="tab" data-screen="kochplan">
+        <span class="tab-icon">🍳</span><span>Kochen</span>
+      </button>
+    </nav>
+
+  </div>
+
+<script src="app.js"></script>
+</body>
+</html>
