@@ -9,14 +9,17 @@ const APP_PASSWORD = "aendermich"; // <-- HIER ändern
    (siehe README.md, Abschnitt "Sync einrichten").
    Bleibt es null, läuft die App einfach nur lokal weiter.
    ============================================================ */
-  const firebaseConfig = {
-    apiKey: "AIzaSyCBAEZ9FVOD-98N44nNWzYIpxNeDnblI8A",
-    authDomain: "entscheidungsapp.firebaseapp.com",
-    projectId: "entscheidungsapp",
-    storageBucket: "entscheidungsapp.firebasestorage.app",
-    messagingSenderId: "1034348019158",
-    appId: "1:1034348019158:web:abcbbccf6b4953d4ee7877"
-  };
+const FIREBASE_CONFIG = null;
+/* Beispiel:
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSy...",
+  authDomain: "wir-entscheiden-xxxx.firebaseapp.com",
+  projectId: "wir-entscheiden-xxxx",
+  storageBucket: "wir-entscheiden-xxxx.appspot.com",
+  messagingSenderId: "...",
+  appId: "..."
+};
+*/
 
 let syncEnabled = false;
 let stateDocRef = null;
@@ -131,7 +134,7 @@ if (store.get('unlocked', false)) {
 const tabs = document.querySelectorAll('.tab');
 const screens = document.querySelectorAll('.screen');
 const screenTitle = document.getElementById('screenTitle');
-const titles = { wheel: 'Glücksrad', cards: 'Filmkarten', coin: 'Münzwurf', kochplan: 'Kochplan' };
+const titles = { wheel: 'Glücksrad', cards: 'Filmkarten', coin: 'Wer entscheidet', kochplan: 'Kochplan' };
 
 tabs.forEach(tab => {
   tab.addEventListener('click', () => {
@@ -143,10 +146,39 @@ tabs.forEach(tab => {
 });
 
 /* ============================================================
+   VIRIDIS – Farbverlauf wie aus R (scale_fill_viridis etc.)
+   ============================================================ */
+const VIRIDIS_STOPS = ['#440154', '#46327e', '#365c8d', '#277f8e', '#1fa187', '#4ac16d', '#a0da39', '#fde725'];
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+function viridis(t) {
+  t = Math.max(0, Math.min(1, t));
+  const scaled = t * (VIRIDIS_STOPS.length - 1);
+  const i = Math.floor(scaled);
+  const frac = scaled - i;
+  const c1 = hexToRgb(VIRIDIS_STOPS[i]);
+  const c2 = hexToRgb(VIRIDIS_STOPS[Math.min(i + 1, VIRIDIS_STOPS.length - 1)]);
+  return rgbToHex(
+    c1.r + (c2.r - c1.r) * frac,
+    c1.g + (c2.g - c1.g) * frac,
+    c1.b + (c2.b - c1.b) * frac
+  );
+}
+/* Helligkeit schätzen, um Text hell oder dunkel zu setzen (Kontrast) */
+function isDark(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.55;
+}
+
+/* ============================================================
    GLÜCKSRAD
    ============================================================ */
-const WHEEL_COLORS = ['#E3A857', '#5B8C85', '#C97B94', '#EAE1CF', '#8C7AA9', '#D9B04F'];
-
 let wheelItems = store.get('wheelItems', ['Döner', 'Pizza', 'Ramen', 'Sushi', 'Falafel', 'Burger']);
 let wheelRotation = 0;
 const canvas = document.getElementById('wheelCanvas');
@@ -163,18 +195,19 @@ function drawWheel() {
   wheelItems.forEach((label, i) => {
     const start = i * slice;
     const end = start + slice;
+    const segColor = viridis(n > 1 ? i / (n - 1) : 0.5);
     ctx.beginPath();
     ctx.moveTo(r, r);
     ctx.arc(r, r, r, start, end);
     ctx.closePath();
-    ctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length];
+    ctx.fillStyle = segColor;
     ctx.fill();
 
     ctx.save();
     ctx.translate(r, r);
     ctx.rotate(start + slice / 2);
     ctx.textAlign = 'right';
-    ctx.fillStyle = '#241F2B';
+    ctx.fillStyle = isDark(segColor) ? '#F3EEE3' : '#16273D';
     ctx.font = '600 22px "Work Sans", sans-serif';
     ctx.fillText(label, r - 24, 8);
     ctx.restore();
@@ -265,6 +298,12 @@ function showNextFilm() {
   card.classList.remove('flipped');
   if (filmDeck.length === 0) filmDeck = shuffle([...filmList]);
   if (filmIndex >= filmDeck.length) { filmDeck = shuffle([...filmList]); filmIndex = 0; }
+
+  const pos = filmIndex;
+  const denom = Math.max(filmDeck.length - 1, 1);
+  const cardColor = viridis(pos / denom);
+  document.getElementById('filmCardFront').style.background = cardColor;
+
   document.getElementById('filmCardBack').textContent = filmDeck[filmIndex] || '–';
   filmIndex++;
 }
