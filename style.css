@@ -297,9 +297,8 @@ body{
 }
 .coin-heads{ background:var(--gold); color:var(--ink); border:3px solid #a85f22; }
 .coin-tails{ background:var(--teal); color:var(--ink); border:3px solid #2c5772; transform:rotateY(180deg); }
-.name-edit-row{ display:flex; gap:8px; }
+.name-edit-row{ display:flex; flex-direction:column; gap:8px; }
 .name-edit-row input{
-  flex:1;
   padding:11px 14px;
   border-radius:12px;
   border:1px solid var(--line-on-dark);
